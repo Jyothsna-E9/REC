@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fresh Harvest Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f2f4f8;
+    }
+    header {
+      background-color: #4caf50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      padding: 1rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    input, button, select {
+      width: 100%;
+      padding: 0.5rem;
+      box-sizing: border-box;
+    }
+    .inventory-item, .order-item {
+      background: white;
+      margin-bottom: 0.5rem;
+      padding: 0.75rem;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    @media (min-width: 600px) {
+      .flex {
+        display: flex;
+        gap: 1rem;
+      }
+      .half {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fresh Harvest Manager</h1>
+  </header>
+  <main>
+    <div class="form-group">
+      <label for="itemName">Add Inventory Item</label>
+      <input type="text" id="itemName" placeholder="e.g., Organic Carrots" />
+      <button onclick="addInventoryItem()">Add Item</button>
+    </div>
+    <div class="form-group">
+      <label>Inventory List</label>
+      <div id="inventoryList"></div>
+    </div>
+    <div class="form-group">
+      <label for="orderSelect">Create Order</label>
+      <select id="orderSelect"></select>
+      <button onclick="addOrder()">Place Order</button>
+    </div>
+    <div class="form-group">
+      <label>Order History</label>
+      <div id="orderList"></div>
+    </div>
+  </main>
+  <script>
+    const inventoryKey = 'inventoryItems';
+    const ordersKey = 'orderHistory';
+
+    function loadInventory() {
+      const items = JSON.parse(localStorage.getItem(inventoryKey)) || [];
+      const inventoryList = document.getElementById('inventoryList');
+      const orderSelect = document.getElementById('orderSelect');
+
+      inventoryList.innerHTML = '';
+      orderSelect.innerHTML = '';
+
+      items.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'inventory-item';
+        div.innerHTML = `${item} <button onclick="deleteInventoryItem(${index})">Delete</button>`;
+        inventoryList.appendChild(div);
+
+        const option = document.createElement('option');
+        option.value = item;
+        option.textContent = item;
+        orderSelect.appendChild(option);
+      });
+    }
+
+    function loadOrders() {
+      const orders = JSON.parse(localStorage.getItem(ordersKey)) || [];
+      const orderList = document.getElementById('orderList');
+
+      orderList.innerHTML = '';
+      orders.forEach((order, index) => {
+        const div = document.createElement('div');
+        div.className = 'order-item';
+        div.textContent = `${index + 1}. ${order}`;
+        orderList.appendChild(div);
+      });
+    }
+
+    function addInventoryItem() {
+      const input = document.getElementById('itemName');
+      const itemName = input.value.trim();
+      if (!itemName) return;
+      const items = JSON.parse(localStorage.getItem(inventoryKey)) || [];
+      items.push(itemName);
+      localStorage.setItem(inventoryKey, JSON.stringify(items));
+      input.value = '';
+      loadInventory();
+    }
+
+    function deleteInventoryItem(index) {
+      const items = JSON.parse(localStorage.getItem(inventoryKey)) || [];
+      items.splice(index, 1);
+      localStorage.setItem(inventoryKey, JSON.stringify(items));
+      loadInventory();
+    }
+
+    function addOrder() {
+      const select = document.getElementById('orderSelect');
+      const selectedItem = select.value;
+      const orders = JSON.parse(localStorage.getItem(ordersKey)) || [];
+      orders.push(`${selectedItem} ordered on ${new Date().toLocaleDateString()}`);
+      localStorage.setItem(ordersKey, JSON.stringify(orders));
+      loadOrders();
+    }
+
+    window.onload = function () {
+      loadInventory();
+      loadOrders();
+    }
+  </script>
+</body>
+</html>
