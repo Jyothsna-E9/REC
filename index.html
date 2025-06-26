@@ -60,6 +60,7 @@
     <div class="form-group">
       <label for="itemName">Add Inventory Item</label>
       <input type="text" id="itemName" placeholder="e.g., Organic Carrots" />
+      <input type="number" id="itemQuantity" placeholder="Quantity" min="1" value="1" />
       <button onclick="addInventoryItem()">Add Item</button>
     </div>
     <div class="form-group">
@@ -91,13 +92,15 @@
       items.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'inventory-item';
-        div.innerHTML = `${item} <button onclick="deleteInventoryItem(${index})">Delete</button>`;
+        div.innerHTML = `${item.name} (Qty: ${item.quantity}) <button onclick="deleteInventoryItem(${index})">Delete</button>`;
         inventoryList.appendChild(div);
 
-        const option = document.createElement('option');
-        option.value = item;
-        option.textContent = item;
-        orderSelect.appendChild(option);
+        if (item.quantity > 0) {
+          const option = document.createElement('option');
+          option.value = index;
+          option.textContent = `${item.name} (Qty: ${item.quantity})`;
+          orderSelect.appendChild(option);
+        }
       });
     }
 
@@ -116,12 +119,21 @@
 
     function addInventoryItem() {
       const input = document.getElementById('itemName');
+      const quantityInput = document.getElementById('itemQuantity');
       const itemName = input.value.trim();
-      if (!itemName) return;
+      const quantity = parseInt(quantityInput.value, 10);
+      if (!itemName || isNaN(quantity) || quantity < 1) return;
       const items = JSON.parse(localStorage.getItem(inventoryKey)) || [];
-      items.push(itemName);
+      // Check if item exists, update quantity if so
+      const existing = items.find(item => item.name === itemName);
+      if (existing) {
+        existing.quantity += quantity;
+      } else {
+        items.push({ name: itemName, quantity });
+      }
       localStorage.setItem(inventoryKey, JSON.stringify(items));
       input.value = '';
+      quantityInput.value = 1;
       loadInventory();
     }
 
@@ -134,10 +146,19 @@
 
     function addOrder() {
       const select = document.getElementById('orderSelect');
-      const selectedItem = select.value;
+      const itemIndex = parseInt(select.value, 10);
+      const items = JSON.parse(localStorage.getItem(inventoryKey)) || [];
+      if (isNaN(itemIndex) || !items[itemIndex] || items[itemIndex].quantity < 1) return;
       const orders = JSON.parse(localStorage.getItem(ordersKey)) || [];
-      orders.push(`${selectedItem} ordered on ${new Date().toLocaleDateString()}`);
+      const item = items[itemIndex];
+      orders.push(`${item.name} ordered on ${new Date().toLocaleDateString()}`);
+      item.quantity -= 1;
+      if (item.quantity === 0) {
+        // Optionally remove item or keep with 0 quantity
+      }
       localStorage.setItem(ordersKey, JSON.stringify(orders));
+      localStorage.setItem(inventoryKey, JSON.stringify(items));
+      loadInventory();
       loadOrders();
     }
 
