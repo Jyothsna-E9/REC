@@ -61,6 +61,11 @@
       <label for="itemName">Add Inventory Item</label>
       <input type="text" id="itemName" placeholder="e.g., Organic Carrots" />
       <input type="number" id="itemQuantity" placeholder="Quantity" min="1" value="1" />
+      <select id="itemCategory">
+        <option value="Fruits">Fruits</option>
+        <option value="Vegetables">Vegetables</option>
+        <option value="Other">Other</option>
+      </select>
       <button onclick="addInventoryItem()">Add Item</button>
     </div>
     <div class="form-group">
@@ -92,13 +97,13 @@
       items.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'inventory-item';
-        div.innerHTML = `${item.name} (Qty: ${item.quantity}) <button onclick="deleteInventoryItem(${index})">Delete</button>`;
+        div.innerHTML = `${item.name} (Qty: ${item.quantity}) <span style='color:#888;'>[${item.category || 'Other'}]</span> <button onclick="deleteInventoryItem(${index})">Delete</button>`;
         inventoryList.appendChild(div);
 
         if (item.quantity > 0) {
           const option = document.createElement('option');
           option.value = index;
-          option.textContent = `${item.name} (Qty: ${item.quantity})`;
+          option.textContent = `${item.name} (Qty: ${item.quantity}) [${item.category || 'Other'}]`;
           orderSelect.appendChild(option);
         }
       });
@@ -120,20 +125,23 @@
     function addInventoryItem() {
       const input = document.getElementById('itemName');
       const quantityInput = document.getElementById('itemQuantity');
+      const categoryInput = document.getElementById('itemCategory');
       const itemName = input.value.trim();
       const quantity = parseInt(quantityInput.value, 10);
+      const category = categoryInput.value;
       if (!itemName || isNaN(quantity) || quantity < 1) return;
       const items = JSON.parse(localStorage.getItem(inventoryKey)) || [];
       // Check if item exists, update quantity if so
-      const existing = items.find(item => item.name === itemName);
+      const existing = items.find(item => item.name === itemName && item.category === category);
       if (existing) {
         existing.quantity += quantity;
       } else {
-        items.push({ name: itemName, quantity });
+        items.push({ name: itemName, quantity, category });
       }
       localStorage.setItem(inventoryKey, JSON.stringify(items));
       input.value = '';
       quantityInput.value = 1;
+      categoryInput.value = 'Fruits';
       loadInventory();
     }
 
